@@ -1,0 +1,11 @@
+name: CraftAll
+version: 0.1.0
+author: Connor McDonald
+main: com.clmcdonald.craftall.CraftAll
+api-version: 1.13
+commands:
+    craftall:
+        description: Craft as many of an item as your inventory can handle
+        usage: /<command> <item>
+        permission: craftall.ca
+        aliases: [ca]
