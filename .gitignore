@@ -1,0 +1,6 @@
+/.project
+.idea/*
+target/*
+*.iml
+.settings/*
+.vscode/*
