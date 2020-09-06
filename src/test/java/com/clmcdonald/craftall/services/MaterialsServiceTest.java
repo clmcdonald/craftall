@@ -56,7 +56,7 @@ public class MaterialsServiceTest {
 
             String parameter = "test-parameter";
             String standardized = MaterialsService.standardizeName(parameter);
-            assertEquals(parameter, standardized);
+            assertEquals(parameter.toUpperCase(), standardized);
         }
     }
 
@@ -129,7 +129,7 @@ public class MaterialsServiceTest {
             when(pluginMock.getDataFolder()).thenReturn(new File("/"));
 
             String standardized = MaterialsService.standardizeName(nickname);
-            assertEquals(nickname, standardized);
+            assertEquals(nickname.toUpperCase(), standardized);
         }
     }
 

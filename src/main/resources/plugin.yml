@@ -1,6 +1,10 @@
 name: CraftAll
+description: Craft as many items as possible
 version: 0.1.0
 author: Connor McDonald
+website: https://github.com/clmcdonald/craftall
+softdepend:
+    - Essentials
 main: com.clmcdonald.craftall.CraftAll
 api-version: 1.13
 commands:
@@ -9,3 +13,12 @@ commands:
         usage: /<command> <item> [max]
         permission: craftall.ca
         aliases: [ca]
+permissions:
+    craftall.*:
+        description: Allows permission to all CraftAll commands
+        default: op
+        children:
+            craftall.ca: true
+    craftall.ca:
+        description: Allows permission to the CraftAll command
+        default: op

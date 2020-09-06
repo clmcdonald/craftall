@@ -39,7 +39,7 @@ public class MaterialsService {
             }
         }
 
-        return materialName;
+        return materialName.toUpperCase();
     }
 
     public static Set<String> retrieveMaterials() {
@@ -75,9 +75,9 @@ public class MaterialsService {
             String joined = Files.lines(jsonPath)
                     .filter((line) -> !line.trim().startsWith("#"))
                     .collect(Collectors.joining());
-            return JsonParser.parseString(joined);
+            return new JsonParser().parse(joined);
         } catch (IOException e) {
-            return JsonParser.parseString("{}");
+            return new JsonParser().parse("{}");
         }
     }
 }
