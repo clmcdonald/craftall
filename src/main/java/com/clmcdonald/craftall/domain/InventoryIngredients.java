@@ -23,15 +23,8 @@ public class InventoryIngredients {
     private Map<RecipeChoice.MaterialChoice, List<Material>> resourceMap;
     private Map<RecipeChoice.MaterialChoice, Integer> multiplicity;
 
-    /**
-     * Creates an instance of InventoryIngredients using the given inventory and recipe.
-     * The craftableAmount will be the maximum amount that can be crafted
-     * using the ingredients from the inventory.
-     * @param inventory
-     * @param recipe
-     */
-    public InventoryIngredients(CraftAllInventory inventory, Recipe recipe) {
-        Map<Material, Integer> inventoryMap = this.itemStacksToMaterialMap(Arrays.asList(inventory.getBukkitInventory().getStorageContents()));
+    public static InventoryIngredients create(CraftAllInventory inventory, Recipe recipe) {
+        Map<Material, Integer> inventoryMap = itemStacksToMaterialMap(Arrays.asList(inventory.getBukkitInventory().getStorageContents()));
 
         Optional<List<RecipeChoice>> optionalRecipeChoices = getRecipeChoices(recipe);
 
@@ -62,8 +55,7 @@ public class InventoryIngredients {
 
                     if (optionalMinimum.isPresent()) {
                         Map.Entry<RecipeChoice.MaterialChoice, Integer> minimum = optionalMinimum.get();
-                        List<Material> materialList = locatedResources.get(minimum.getKey());
-                        materialList.add(key);
+                        locatedResources.get(minimum.getKey()).add(key);
                     } else {
                         break;
                     }
@@ -85,23 +77,29 @@ public class InventoryIngredients {
                     }
                 });
 
-                this.setCraftableAmount(amountCraftable);
-                this.setResourceMap(locatedResources);
-                this.setMultiplicity(multiplicity);
+                return new InventoryIngredients(amountCraftable, locatedResources, multiplicity);
             }
         }
+
+        return new InventoryIngredients();
     }
 
     /**
      * @return a map that gets the amount of each material needed to complete the recipe
      */
-    public Map<Material, Long> getMaterialMap() {
-        return resourceMap.values().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.groupingBy(
-                        Function.identity(),
-                        Collectors.counting()
-                ));
+    public Map<Material, Integer> getMaterialMap() {
+        if(resourceMap != null) {
+            return resourceMap.values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.groupingBy(
+                            Function.identity(),
+                            Collectors.counting()
+                    ))
+                    .entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey, (entry) -> entry.getValue().intValue()));
+        } else {
+            return new HashMap<>();
+        }
     }
 
     /**
@@ -110,22 +108,24 @@ public class InventoryIngredients {
      * craftable amount is set lower. If it is set higher,
      * the resource map will be lacking enough resources to
      * craft the amount.
-     * @param craftableAmount
+     * @param craftableAmount the amount to set
      */
     public void setCraftableAmount(int craftableAmount) {
         this.craftableAmount = craftableAmount;
 
-        resourceMap.forEach((key, value) -> {
-            int multiplicity = this.multiplicity.get(key);
-            int expectedNumberOfMaterials = craftableAmount*multiplicity;
+        if(resourceMap != null) {
+            resourceMap.forEach((key, value) -> {
+                int multiplicity = this.multiplicity.get(key);
+                int expectedNumberOfMaterials = craftableAmount*multiplicity;
 
-            while(value.size() > expectedNumberOfMaterials) {
-                value.remove(0);
-            }
-        });
+                while(value.size() > expectedNumberOfMaterials) {
+                    value.remove(0);
+                }
+            });
+        }
     }
 
-    private Optional<List<RecipeChoice>> getRecipeChoices(Recipe recipe) {
+    private static Optional<List<RecipeChoice>> getRecipeChoices(Recipe recipe) {
         if(recipe instanceof ShapelessRecipe) {
             return Optional.of(((ShapelessRecipe) recipe).getChoiceList());
         }
@@ -138,7 +138,7 @@ public class InventoryIngredients {
         return Optional.empty();
     }
 
-    private Map<Material, Integer> itemStacksToMaterialMap(List<ItemStack> itemStacks) {
+    private static Map<Material, Integer> itemStacksToMaterialMap(List<ItemStack> itemStacks) {
         return itemStacks
                 .stream()
                 .filter(Objects::nonNull)

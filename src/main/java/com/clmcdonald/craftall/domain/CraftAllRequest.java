@@ -1,22 +1,29 @@
 package com.clmcdonald.craftall.domain;
 
-import java.util.*;
-
-import com.google.common.collect.Lists;
-
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NonNull;
 import org.bukkit.Material;
 import org.bukkit.inventory.Recipe;
 
-import lombok.Data;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * This object stores information that is needed to perform the craft all command.
  */
 @Data
+@AllArgsConstructor
 public class CraftAllRequest implements Comparable<CraftAllRequest> {
-    private Material material;
     private Recipe recipe;
+
+    @NonNull
+    private Material material;
+    @NonNull
     private InventoryIngredients inventoryIngredients;
+    @NonNull
+    private Integer maximum;
 
     /**
      * Creates a new CraftAllRequest from the given information
@@ -24,26 +31,19 @@ public class CraftAllRequest implements Comparable<CraftAllRequest> {
      * @param inventory the player inventory of the user who is crafting
      * @param material the material to craft
      */
-    public CraftAllRequest(List<Recipe> recipes, CraftAllInventory inventory, Material material) {
-
+    public static CraftAllRequest create(List<Recipe> recipes, CraftAllInventory inventory, Material material, Integer maximum) {
         if(recipes.size() == 0) {
-            this.material = material;
-            this.recipe = null;
-            this.inventoryIngredients = new InventoryIngredients();
-        } else if(recipes.size() == 1) {
-            this.material = material;
-            this.recipe = recipes.get(0);
-            this.inventoryIngredients = this.maximumInventoryIngredients(inventory, this.material, recipe);
+            return new CraftAllRequest(null, material, new InventoryIngredients(), maximum);
         } else {
-            List<List<Recipe>> partitioned = Lists.partition(recipes, (int) Math.ceil(recipes.size()/2.0));
-            
-            CraftAllRequest request1 = new CraftAllRequest(partitioned.get(0), inventory, material);
-            CraftAllRequest request2 = new CraftAllRequest(partitioned.get(1), inventory, material);
+            List<CraftAllRequest> craftAllRequestList = recipes
+                    .stream()
+                    .map((recipe) -> {
+                        InventoryIngredients inventoryIngredients = maximumInventoryIngredients(recipe, material, inventory, maximum);
+                        return new CraftAllRequest(recipe, material, inventoryIngredients, maximum);
+                    })
+                    .collect(Collectors.toList());
 
-            CraftAllRequest greater = request1.compareTo(request2) < 0 ? request2 : request1;
-            this.material = greater.getMaterial();
-            this.recipe = greater.getRecipe();
-            this.inventoryIngredients = greater.getInventoryIngredients();
+            return Collections.max(craftAllRequestList);
         }
     }
 
@@ -66,13 +66,20 @@ public class CraftAllRequest implements Comparable<CraftAllRequest> {
      * @param recipe the recipe to use to craft the material
      * @return the amount of items that can be crafted and fit
      */
-    private InventoryIngredients maximumInventoryIngredients(CraftAllInventory inventory, Material material, Recipe recipe) {
-        InventoryIngredients ingredients = new InventoryIngredients(inventory, recipe);
+    private static InventoryIngredients maximumInventoryIngredients(Recipe recipe, Material material, CraftAllInventory inventory, Integer maximum) {
+        InventoryIngredients ingredients = InventoryIngredients.create(inventory, recipe);
 
-        while(!inventory.canFit(material, ingredients)) {
+        while(greaterThanMax(ingredients.getCraftableAmount(), maximum) || !inventory.canFit(material, ingredients)) {
             ingredients.setCraftableAmount(ingredients.getCraftableAmount() - recipe.getResult().getAmount());
         }
 
         return ingredients;
+    }
+
+    private static boolean greaterThanMax(int amount, int maximum) {
+        if(maximum < 0)
+            return false;
+        else
+            return amount > maximum;
     }
 }

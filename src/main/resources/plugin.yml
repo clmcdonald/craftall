@@ -6,6 +6,6 @@ api-version: 1.13
 commands:
     craftall:
         description: Craft as many of an item as your inventory can handle
-        usage: /<command> <item>
+        usage: /<command> <item> [max]
         permission: craftall.ca
         aliases: [ca]

@@ -1,34 +1,60 @@
 package com.clmcdonald.craftall;
 
 import com.clmcdonald.craftall.commands.CraftAllCommand;
-
+import com.clmcdonald.craftall.services.MaterialsService;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.PluginCommand;
-import org.bukkit.command.TabCompleter;
-import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.plugin.java.JavaPluginLoader;
 import org.bukkit.util.StringUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.io.File;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class CraftAll extends JavaPlugin {
+
+    public CraftAll() {
+        // Needed for MockBukkit
+        super();
+    }
+
+    protected CraftAll(JavaPluginLoader loader, PluginDescriptionFile description, File dataFolder, File file) {
+        // Needed for MockBukkit
+        super(loader, description, dataFolder, file);
+    }
+
     @Override
     public void onEnable() {
         PluginCommand pluginCommand = this.getCommand("craftall");
         assert pluginCommand != null;
-        pluginCommand.setTabCompleter((sender, command, alias, args) -> {
+        pluginCommand.setTabCompleter(this::tabCompleter);
+        pluginCommand.setExecutor(new CraftAllCommand());
+    }
+
+    private List<String> tabCompleter(CommandSender sender, Command command, String alias, String[] argsArray) {
+        List<String> args = Arrays.asList(argsArray);
+
+        if(args.size() > 0) {
             List<String> completions = new ArrayList<>();
-            StringUtil.copyPartialMatches(args[0], Arrays.asList("a", "aa", "aaa", "aaaa", "aaaaa"), completions);
+            Set<String> suggestions = null;
+
+            if(args.size() == 1) {
+                suggestions = MaterialsService.retrieveMaterials();
+            } else if(args.size() == 2) {
+                suggestions = Stream.of("1", "64").collect(Collectors.toSet());
+            } else {
+                suggestions = new HashSet<>();
+            }
+
+            StringUtil.copyPartialMatches(args.get(args.size() - 1), suggestions, completions);
             Collections.sort(completions);
             return completions;
-        });
-        pluginCommand.setExecutor(new CraftAllCommand());
-
-        this.saveDefaultConfig();
-        FileConfiguration config = this.getConfig();
+        } else {
+            return new ArrayList<>();
+        }
     }
 }

@@ -41,7 +41,7 @@ public class CraftAllPlayer {
 
     /**
      * Get the CraftAllInventory version of the player's inventory
-     * @return
+     * @return craft all inventory wrapper
      */
     public CraftAllInventory getInventory() {
         return new CraftAllInventory(this.getBukkitPlayer().getInventory());
