@@ -32,14 +32,13 @@ public class CraftAllTest {
     @Mock
     private Command commandMock;
 
-    private CraftAll craftAll;
     private PluginCommand command;
     private TabCompleter tabCompleter;
 
     @BeforeEach
     public void beforeEach() {
         MockBukkit.mock();
-        craftAll = MockBukkit.load(CraftAll.class);
+        CraftAll craftAll = MockBukkit.load(CraftAll.class);
 
         command = craftAll.getCommand("craftall");
         assertNotNull(command);
@@ -51,11 +50,6 @@ public class CraftAllTest {
     @AfterEach
     public void afterEach() {
         MockBukkit.unmock();
-    }
-
-    @Test
-    public void emptyConstructor() {
-
     }
 
     @Test
